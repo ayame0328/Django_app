@@ -1,0 +1,91 @@
+{% extends 'blog/base.html' %}
+{% load custom_filters %}  <!-- ここでカスタムフィルタを読み込み -->
+
+{% block title %}{% if form.instance.pk %}Edit Post{% else %}New Post{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mt-4">
+    <h1>{% if form.instance.pk %}Edit Post{% else %}New Post{% endif %}</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group">
+                    {{ form.title.label_tag }}
+                    {{ form.title|add_class:"form-control" }}
+                </div>
+                <div class="form-group">
+                    {{ form.content.label_tag }}
+                    {{ form.content|add_class:"form-control ckeditor-custom" }}
+                </div>
+                <div class="form-group">
+                    {{ form.image.label_tag }}
+                    {{ form.image|add_class:"form-control-file" }}
+                </div>
+                <div class="form-group">
+                    {{ form.video.label_tag }}
+                    {{ form.video|add_class:"form-control-file" }}
+                </div>
+                <div class="form-group">
+                    {{ form.file.label_tag }}
+                    {{ form.file|add_class:"form-control-file" }}
+                </div>
+                <div class="form-group">
+                    {{ form.is_paid_content.label_tag }}
+                    {{ form.is_paid_content }}
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- CKEditor JavaScriptの読み込み -->
+<script src="https://cdn.ckeditor.com/4.16.1/standard-all/ckeditor.js"></script>
+<script>
+    CKEDITOR.replace('id_content', {
+        extraPlugins: 'uploadimage,image2',
+        filebrowserUploadUrl: '{% url "ckeditor_upload" %}?csrfmiddlewaretoken={{ csrf_token }}',
+        filebrowserBrowseUrl: '{% url "ckeditor_browse" %}',
+        height: 400,
+        width: '100%'
+    });
+
+    // CSRFトークンをセットする
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    CKEDITOR.on('dialogDefinition', function (ev) {
+        const dialogName = ev.data.name;
+        const dialogDefinition = ev.data.definition;
+        const uploadTab = dialogDefinition.getContents('Upload');
+        if (uploadTab) {
+            const uploadButton = uploadTab.get('uploadButton');
+            uploadButton['filebrowser']['onSelect'] = function (fileUrl, data) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', fileUrl, true);
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                xhr.send(data);
+            };
+        }
+    });
+    // ページ読み込み時に予約投稿チェックボックスの状態を確認
+    document.addEventListener('DOMContentLoaded', function () {
+        const isScheduled = document.getElementById('id_is_scheduled').checked;
+        if (isScheduled) {
+            document.getElementById('scheduled_time_field').style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

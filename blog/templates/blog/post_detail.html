@@ -1,0 +1,33 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<div class="mt-4">
+    <h1>{{ post.title }}</h1>
+    <p>{{ post.content|safe }}</p> <!-- safeフィルタを追加 -->
+    {% if post.image %}
+    <img src="{{ post.image.url }}" alt="Image" class="img-fluid" width="710" height="480">
+    {% endif %}
+    {% if post.video %}
+    <div class="embed-responsive embed-responsive-16by9">
+        <video controls>
+            <source src="{{ post.video.url }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    {% endif %}
+    {% if post.file %}
+        {% if post.is_paid_content %}
+        <p>This is paid content. Please complete the payment to download the file.</p>
+        <!-- 外部決済リンクをここに追加 -->
+        {% else %}
+        <a href="{{ post.file.url }}" class="btn btn-success" download>Download File</a>
+        {% endif %}
+    {% endif %}
+    <br>
+    <a href="{% url 'post_edit' post.pk %}" class="btn btn-warning mt-3">Edit</a>
+    <a href="{% url 'post_delete' post.pk %}" class="btn btn-danger mt-3">Delete</a>
+    <a href="{% url 'post_list' %}" class="btn btn-secondary mt-3">Back to top</a>
+</div>
+{% endblock %}
